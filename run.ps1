@@ -56,4 +56,11 @@ Write-Host " Launching SMART-EV 2.0 Web Cockpit on http://localhost:3000" -Foreg
 Write-Host " Press Ctrl+C to terminate server" -ForegroundColor DarkGray
 Write-Host "==================================================================" -ForegroundColor Cyan
 
-node server/server.js
+$portInUse = Get-NetTCPConnection -LocalPort 3000 -State Listen -ErrorAction SilentlyContinue
+if ($portInUse) {
+    Write-Host "Web Cockpit is already running on http://localhost:3000 (Process ID: $($portInUse[0].OwningProcess))." -ForegroundColor Green
+    Write-Host "Open http://localhost:3000 in your browser to view the cockpit." -ForegroundColor Cyan
+} else {
+    node server/server.js
+}
+
