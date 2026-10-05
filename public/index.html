@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SMART-EV 2.0 | Digital Twin Cockpit & Energy Arbiter</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="vendor/chart.umd.js"></script>
+</head>
+<body class="cockpit-theme">
+  <!-- Top Navigation & System Status Header -->
+  <header class="cockpit-header">
+    <div class="brand-group">
+      <div class="brand-logo">
+        <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2">
+          <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" fill="#38bdf8"/>
+        </svg>
+      </div>
+      <div>
+        <h1 class="brand-title">SMART-EV 2.0 <span class="badge-sparkle">KPIT SPARKLE</span></h1>
+        <p class="brand-subtitle">Confidence-Calibrated Dual-Loop Energy & Safety Architecture &bull; <span class="tag-simulated">SIMULATED, model-based</span></p>
+      </div>
+    </div>
+
+    <!-- Active Safety / Energy Mode Badge -->
+    <div class="header-status-box">
+      <div class="mode-container">
+        <span class="mode-label">ARBITER STATUS</span>
+        <div id="mode-badge" class="mode-badge mode-aggressive">AGGRESSIVE</div>
+      </div>
+      <div class="system-time" id="system-clock">00:00:00</div>
+      <button id="btn-blueprint" class="btn-blueprint" title="View 4-Tier Architecture Blueprint">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+          <line x1="3" y1="9" x2="21" y2="9"/>
+          <line x1="9" y1="21" x2="9" y2="9"/>
+        </svg>
+        Blueprint
+      </button>
+    </div>
+  </header>
+
+  <!-- Main Dashboard Layout Grid -->
+  <main class="cockpit-grid">
+
+    <!-- Column 1: Primary Digital Twin Gauges -->
+    <section class="cockpit-col primary-gauges-col">
+      <!-- Speedometer & Dynamic Telemetry -->
+      <div class="glass-card gauge-card">
+        <div class="card-header">
+          <h3>VEHICLE KINEMATICS</h3>
+          <span class="telemetry-badge">CAN BUS 50 Hz</span>
+        </div>
+        <div class="gauge-speed-wrap">
+          <div class="speed-radial">
+            <span class="speed-value" id="val-speed">92</span>
+            <span class="speed-unit">km/h</span>
+          </div>
+          <div class="speed-aux-row">
+            <div class="aux-stat">
+              <span class="stat-label">Power</span>
+              <span class="stat-num" id="val-power">18.4 kW</span>
+            </div>
+            <div class="aux-stat">
+              <span class="stat-label">Pack Voltage</span>
+              <span class="stat-num" id="val-voltage">382.4 V</span>
+            </div>
+            <div class="aux-stat">
+              <span class="stat-label">Current</span>
+              <span class="stat-num" id="val-current">48.2 A</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Calibrated Range Prediction Gauge (Confidence Bounds) -->
+      <div class="glass-card range-gauge-card">
+        <div class="card-header">
+          <h3>CONFORMAL RANGE ESTIMATE</h3>
+          <span class="ci-badge">95% COVERAGE CALIBRATED</span>
+        </div>
+        <div class="range-display-hero">
+          <div class="range-point-container">
+            <span class="range-point" id="val-range-point">247</span>
+            <span class="range-unit">km</span>
+          </div>
+          <div class="range-interval-tag" id="val-range-interval">
+            Confidence: [236.4, 258.0] km
+          </div>
+        </div>
+
+        <!-- Uncertainty-Band Visual Bar -->
+        <div class="uncertainty-gauge-wrap">
+          <div class="uncertainty-labels">
+            <span id="unc-lo">236 km</span>
+            <span class="unc-mid">Point Estimate</span>
+            <span id="unc-hi">258 km</span>
+          </div>
+          <div class="uncertainty-track">
+            <div class="uncertainty-band" id="unc-band-fill" style="left: 20%; width: 60%;"></div>
+            <div class="uncertainty-needle" id="unc-needle" style="left: 50%;"></div>
+          </div>
+          <div class="uncertainty-metric">
+            Half-Width: <span id="val-half-width">4.4%</span> (Threshold: 12.0%)
+          </div>
+        </div>
+      </div>
+
+      <!-- Battery Digital Twin (Inner EKF + Thevenin ECM) -->
+      <div class="glass-card battery-twin-card">
+        <div class="card-header">
+          <h3>BATTERY DIGITAL TWIN</h3>
+          <span class="badge-ekf">EKF 20ms LOOP</span>
+        </div>
+        <div class="twin-metrics-grid">
+          <div class="twin-box">
+            <span class="twin-label">State of Charge (SoC)</span>
+            <div class="soc-bar-wrap">
+              <div class="soc-bar-fill" id="soc-bar-fill" style="width: 78%;"></div>
+            </div>
+            <span class="twin-value" id="val-soc">78.0%</span>
+          </div>
+          <div class="twin-box">
+            <span class="twin-label">Internal Resistance R0</span>
+            <span class="twin-value text-cyan" id="val-r0">0.046 Ω</span>
+            <span class="sub-label">Arrhenius Temp Corrected</span>
+          </div>
+          <div class="twin-box">
+            <span class="twin-label">Cell Temperature</span>
+            <span class="twin-value text-amber" id="val-cell-temp">28.4°C</span>
+            <span class="sub-label">Threshold: 60.0°C</span>
+          </div>
+          <div class="twin-box">
+            <span class="twin-label">Thermal Rate dT/dt</span>
+            <span class="twin-value text-emerald" id="val-dtdt">0.24 °C/min</span>
+            <span class="sub-label">Precursor Limit: 1.0 °C/min</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Column 2: Live Top-Down Animated Traffic & V2V Safety Mesh -->
+    <section class="cockpit-col center-sim-col">
+      <!-- 2D Animated Top-Down Road Simulation -->
+      <div class="glass-card road-sim-card">
+        <div class="card-header">
+          <h3>TOP-DOWN CACC PLATOON & BRAKE WAVE PROPAGATION</h3>
+          <span class="v2v-sync-badge" id="v2v-status-badge">V2V MESH SYNC: 4 ms</span>
+        </div>
+
+        <div class="canvas-container">
+          <canvas id="trafficCanvas" width="700" height="260"></canvas>
+          <div class="canvas-overlay-legend">
+            <span><span class="dot dot-lead"></span> Lead Vehicle</span>
+            <span><span class="dot dot-host"></span> Host (SMART-EV 2.0)</span>
+            <span><span class="dot dot-tail"></span> Follower / Tailgater</span>
+            <span><span class="wave-indicator"></span> V2V RF Wave</span>
+          </div>
+        </div>
+
+        <div class="platoon-stats-row">
+          <div class="platoon-stat">
+            <span class="stat-lbl">Leader Gap</span>
+            <span class="stat-val" id="val-lead-gap">28.5 m</span>
+          </div>
+          <div class="platoon-stat">
+            <span class="stat-lbl">Time Headway</span>
+            <span class="stat-val" id="val-headway">0.60 s</span>
+          </div>
+          <div class="platoon-stat">
+            <span class="stat-lbl">Cd Drafting Benefit</span>
+            <span class="stat-val text-emerald" id="val-cd-benefit">-28.2% (0.201)</span>
+          </div>
+          <div class="platoon-stat">
+            <span class="stat-lbl">Tailgater Gap</span>
+            <span class="stat-val text-amber" id="val-tail-gap">22.0 m</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Real-time Charting Telemetry -->
+      <div class="glass-card chart-card">
+        <div class="card-header">
+          <h3>REAL-TIME DIGITAL TWIN TELEMETRY</h3>
+          <div class="chart-tab-group">
+            <button class="tab-btn active" data-chart="range">Range & Confidence</button>
+            <button class="tab-btn" data-chart="thermal">Thermal Precursor (dT/dt)</button>
+            <button class="tab-btn" data-chart="speed">Kinematics</button>
+          </div>
+        </div>
+        <div class="chart-canvas-wrap">
+          <canvas id="telemetryChart"></canvas>
+        </div>
+      </div>
+    </section>
+
+    <!-- Column 3: Zero-Trust V2V, Dempster-Shafer, and Scenario Launcher -->
+    <section class="cockpit-col controls-col">
+      <!-- Dempster-Shafer Sensor Fusion & Zero-Trust -->
+      <div class="glass-card trust-fusion-card">
+        <div class="card-header">
+          <h3>DEMPSTER-SHAFER TRUST GATING</h3>
+          <span class="zero-trust-badge">ZERO-TRUST VALIDATOR</span>
+        </div>
+
+        <div class="trust-bars-grid">
+          <div class="trust-bar-item">
+            <div class="bar-header">
+              <span>Radar Mass m(Safe)</span>
+              <span id="val-radar-trust">0.94</span>
+            </div>
+            <div class="trust-track"><div class="trust-fill fill-radar" id="fill-radar" style="width: 94%;"></div></div>
+          </div>
+          <div class="trust-bar-item">
+            <div class="bar-header">
+              <span>V2V Advisory m(Safe)</span>
+              <span id="val-v2v-trust">0.92</span>
+            </div>
+            <div class="trust-track"><div class="trust-fill fill-v2v" id="fill-v2v" style="width: 92%;"></div></div>
+          </div>
+          <div class="trust-bar-item">
+            <div class="bar-header">
+              <span>IMU Consistency m(Safe)</span>
+              <span id="val-imu-trust">0.95</span>
+            </div>
+            <div class="trust-track"><div class="trust-fill fill-imu" id="fill-imu" style="width: 95%;"></div></div>
+          </div>
+        </div>
+
+        <div class="fusion-diagnostics">
+          <div class="diag-item">
+            <span>D-S Conflict K:</span>
+            <strong id="val-conflict-k">0.048</strong>
+          </div>
+          <div class="diag-item">
+            <span>V2V Latency:</span>
+            <strong id="val-v2v-latency">4.8 ms</strong>
+          </div>
+          <div class="diag-item">
+            <span>Packet Loss:</span>
+            <strong id="val-v2v-loss">1.2%</strong>
+          </div>
+          <div class="diag-item">
+            <span>Decision:</span>
+            <strong class="text-cyan" id="val-fusion-decision">NOMINAL_SAFE</strong>
+          </div>
+        </div>
+      </div>
+
+      <!-- Environment & Cyber-Physical Sliders -->
+      <div class="glass-card environment-card">
+        <div class="card-header">
+          <h3>CYBER-PHYSICAL INJECTION & ENVIRONMENT</h3>
+        </div>
+
+        <div class="sliders-list">
+          <div class="slider-group">
+            <div class="slider-header">
+              <label for="slider-temp">Ambient Temperature</label>
+              <span id="disp-temp">25°C</span>
+            </div>
+            <input type="range" id="slider-temp" min="-15" max="45" value="25" step="1">
+          </div>
+
+          <div class="slider-group">
+            <div class="slider-header">
+              <label for="slider-grade">Road Gradient</label>
+              <span id="disp-grade">0.0%</span>
+            </div>
+            <input type="range" id="slider-grade" min="-6" max="6" value="0" step="0.5">
+          </div>
+
+          <div class="slider-group">
+            <div class="slider-header">
+              <label for="slider-hvac">HVAC Power Load</label>
+              <span id="disp-hvac">800 W</span>
+            </div>
+            <input type="range" id="slider-hvac" min="0" max="4500" value="800" step="100">
+          </div>
+
+          <div class="slider-group">
+            <div class="slider-header">
+              <label for="slider-loss">V2V Packet Loss Rate</label>
+              <span id="disp-loss">1.5%</span>
+            </div>
+            <input type="range" id="slider-loss" min="0" max="25" value="1.5" step="0.5">
+          </div>
+
+          <div class="toggle-row">
+            <label for="toggle-attack" class="toggle-label">Byzantine Spoof Attack</label>
+            <input type="checkbox" id="toggle-attack" class="switch-toggle">
+          </div>
+        </div>
+      </div>
+
+      <!-- Scenario Control Buttons -->
+      <div class="glass-card scenario-launcher-card">
+        <div class="card-header">
+          <h3>SCENARIO BENCHMARKS</h3>
+          <span class="scenario-count">SCENARIOS 1 - 6</span>
+        </div>
+        <div class="scenario-btn-grid">
+          <button class="btn-scenario" data-scenario="1">S1: Range vs OEM</button>
+          <button class="btn-scenario" data-scenario="2">S2: 85 km/h Lead Brake</button>
+          <button class="btn-scenario" data-scenario="3">S3: D-S Trust Gating</button>
+          <button class="btn-scenario" data-scenario="4">S4: Thermal Precursor</button>
+          <button class="btn-scenario" data-scenario="5">S5: CACC Platooning</button>
+          <button class="btn-scenario btn-special-brake" data-scenario="6">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+            </svg>
+            High-Speed Sudden Brake (120 km/h)
+          </button>
+        </div>
+
+        <div class="comparison-toggle-row">
+          <button id="btn-toggle-aeb" class="btn-toggle-aeb">
+            Toggle: Traditional AEB vs SMART-EV 2.0
+          </button>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Scenario Details Modal -->
+  <div id="scenario-modal" class="modal-backdrop hidden">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h2 id="modal-title">Scenario Report</h2>
+        <button id="modal-close" class="modal-close-btn">&times;</button>
+      </div>
+      <div class="modal-body" id="modal-content">
+        <!-- Injected via app.js -->
+      </div>
+    </div>
+  </div>
+
+  <!-- 4-Tier Architecture Blueprint Modal -->
+  <div id="blueprint-modal" class="modal-backdrop hidden">
+    <div class="modal-box blueprint-modal-box">
+      <div class="modal-header">
+        <h2>SMART-EV 2.0: 4-Tier Automotive Architecture Blueprint</h2>
+        <button id="blueprint-close" class="modal-close-btn">&times;</button>
+      </div>
+      <div class="modal-body blueprint-body">
+        <div class="blueprint-tier-grid">
+          <!-- Tier 1 -->
+          <div class="tier-card">
+            <div class="tier-badge">TIER 1</div>
+            <h3>In-Vehicle Sensors & CAN Bus</h3>
+            <ul>
+              <li><strong>Millimeter-Wave Radar:</strong> 77 GHz radar tracking closing rate and target persistence.</li>
+              <li><strong>6-DOF IMU:</strong> Kinematic acceleration and yaw rate cross-validation.</li>
+              <li><strong>Battery Sensor Hub:</strong> Pack voltage, cell-level thermistors, high-voltage Hall current sensor.</li>
+              <li><strong>Deterministic CAN-FD:</strong> High-bandwidth 50 Hz cyclic telemetry bus.</li>
+            </ul>
+          </div>
+
+          <!-- Tier 2 -->
+          <div class="tier-card">
+            <div class="tier-badge">TIER 2</div>
+            <h3>V2V Cooperative Mesh</h3>
+            <ul>
+              <li><strong>C-V2X (PC5 interface) & DSRC:</strong> 10 Hz Basic Safety Message (BSM) broadcast.</li>
+              <li><strong>Advisory Zero-Trust Gateway:</strong> Real-time latency and packet loss watchdog.</li>
+              <li><strong>Kinematic Cross-Correlation:</strong> Cross-checks received acceleration against local radar.</li>
+              <li><strong>Cooperative Deceleration:</strong> 4 ms lookahead sync enabling anticipatory regen.</li>
+            </ul>
+          </div>
+
+          <!-- Tier 3 -->
+          <div class="tier-card highlight-tier">
+            <div class="tier-badge">TIER 3</div>
+            <h3>Edge Intelligence & Fail-Safe Arbiter</h3>
+            <ul>
+              <li><strong>Inner Loop EKF (20 ms):</strong> State-of-Charge and internal resistance R0 tracking on Thevenin ECM.</li>
+              <li><strong>Outer Loop Physics Model (1 s):</strong> Non-perpetual energy-conserving range engine.</li>
+              <li><strong>Split Conformal Prediction:</strong> Calibrated 95% confidence intervals [lo, hi].</li>
+              <li><strong>Deterministic Safety Arbiter:</strong> Dynamic fallback when half-width &gt; 12% (&lt; 50 ms transition).</li>
+            </ul>
+          </div>
+
+          <!-- Tier 4 -->
+          <div class="tier-card">
+            <div class="tier-badge">TIER 4</div>
+            <h3>Application & Fleet Dashboard</h3>
+            <ul>
+              <li><strong>Automotive Cockpit UI:</strong> Glassmorphism dark mode with real-time digital twins.</li>
+              <li><strong>Fleet Telemetry & Charging Lookahead:</strong> Microclimate & charger queue preview.</li>
+              <li><strong>ISO 26262 ASIL-D Audit Log:</strong> State transition and fallback traceability.</li>
+              <li><strong>Slide-7 Analytics Exporter:</strong> 300 DPI high-resolution publication charts.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer class="cockpit-footer">
+    <div class="footer-left">
+      <span>SMART-EV 2.0 &bull; Dual-Loop Predictive Energy Architecture</span>
+      <span class="footer-sep">|</span>
+      <span>Conformal Coverage: <strong id="foot-coverage">96.0%</strong> (Target &ge; 95%)</span>
+      <span class="footer-sep">|</span>
+      <span>MAE: <strong id="foot-mae">3.06%</strong> (Target &lt; 4.5%)</span>
+    </div>
+    <div class="footer-right">
+      <span>KPIT SPARKLE 2026 ENTRY</span>
+    </div>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>

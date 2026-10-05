@@ -1,0 +1,16 @@
+{
+  "name": "smart-ev2",
+  "version": "2.0.0",
+  "description": "SMART-EV 2.0 - Confidence-Calibrated Dual-Loop Predictive Energy Architecture for EVs",
+  "main": "server/server.js",
+  "scripts": {
+    "start": "node server/server.js",
+    "sim": "python sim/run_all.py",
+    "test": "pytest tests/test_all.py"
+  },
+  "dependencies": {
+    "chart.js": "^4.5.1",
+    "express": "^4.21.2"
+  },
+  "private": true
+}
